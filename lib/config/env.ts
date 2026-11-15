@@ -20,7 +20,7 @@ const databaseUrl = requireEnv("DATABASE_URL", process.env.DATABASE_URL);
 const redisUrl = requireEnv("REDIS_URL", process.env.REDIS_URL);
 const jwtSecret = requireEnv("JWT_SECRET", process.env.JWT_SECRET);
 const encryptionKey = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
-const appUrl = requireEnv("NEXT_PUBLIC_APP_URL", process.env.NEXT_PUBLIC_APP_URL);
+const appUrl = requireEnv("APP_URL", process.env.APP_URL);
 const nodeEnv = process.env.NODE_ENV;
 const port = process.env.PORT;
 
@@ -35,7 +35,7 @@ if (!/^[\da-fA-F]{64}$/.test(encryptionKey)) {
 try {
   new URL(appUrl);
 } catch {
-  throw new Error("NEXT_PUBLIC_APP_URL must be an absolute URL.");
+  throw new Error("APP_URL must be an absolute URL.");
 }
 
 if (port !== undefined && (!/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535)) {

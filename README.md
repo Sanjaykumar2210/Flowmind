@@ -54,7 +54,7 @@ DATABASE_URL="your PostgreSQL connection string"
 REDIS_URL="your Redis connection string"
 JWT_SECRET="a randomly generated secret with at least 32 characters"
 ENCRYPTION_KEY="a randomly generated 64-character hexadecimal key"
-NEXT_PUBLIC_APP_URL="the public absolute URL of this FlowMind instance"
+APP_URL="the public absolute URL of this FlowMind instance"
 ```
 
 For a local `.env`, generate and append the encryption key once without printing it:
@@ -283,7 +283,7 @@ npm run test
 | `REDIS_URL` | Yes | Redis connection string for BullMQ |
 | `JWT_SECRET` | Yes | Random signing secret, at least 32 characters |
 | `ENCRYPTION_KEY` | Yes | Random 64-character hex key used for integration secrets |
-| `NEXT_PUBLIC_APP_URL` | Yes | Public absolute URL for this app |
+| `APP_URL` | Yes | Server-only public absolute URL for this app |
 | `NODE_ENV` | No | Set by the Next.js runtime |
 | `PORT` | No | Optional port consumed by `next start` |
 

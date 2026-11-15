@@ -74,7 +74,7 @@ async function main() {
 }
 
 main().catch((error: unknown) => {
-  const configurationError = error instanceof Error && /^(Missing required environment variable [A-Z0-9_]+|JWT_SECRET must|ENCRYPTION_KEY must|NEXT_PUBLIC_APP_URL must|PORT must)/.test(error.message);
+  const configurationError = error instanceof Error && /^(Missing required environment variable [A-Z0-9_]+|JWT_SECRET must|ENCRYPTION_KEY must|APP_URL must|PORT must)/.test(error.message);
   if (configurationError && error instanceof Error) {
     console.error(error.message);
   } else {

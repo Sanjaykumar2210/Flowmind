@@ -14,7 +14,7 @@ beforeAll(async () => {
   vi.stubEnv("REDIS_URL", "redis://cache.invalid:6379");
   vi.stubEnv("JWT_SECRET", "test-signing-secret-that-is-at-least-32-chars");
   vi.stubEnv("ENCRYPTION_KEY", "0000000000000000000000000000000000000000000000000000000000000000");
-  vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://flowmind.example.test");
+  vi.stubEnv("APP_URL", "https://flowmind.example.test");
   ({ AIClient } = await import("@/lib/ai/client"));
   ({ resolveAIConfig, resolveSMTPConfig, getAIIntegration } = await import("@/lib/engine/integration-resolver"));
   ({ presentIntegration, protectIntegrationConfig } = await import("@/lib/integrations/config"));
