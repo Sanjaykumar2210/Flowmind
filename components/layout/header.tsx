@@ -5,21 +5,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bell,
-  Search,
   ChevronRight,
   ShieldCheck,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 export function Header({ user }: { user?: { name: string; email: string } }) {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
 
   return (
-    <header className="flex h-14 w-full items-center justify-between border-b border-[#252C3A] bg-[#0E111B]/80 px-6 backdrop-blur-md">
+    <header className="flex h-14 w-full shrink-0 min-w-0 items-center justify-between gap-2 border-b border-[#252C3A] bg-[#0E111B]/80 px-3 backdrop-blur-md sm:px-6">
       {/* Breadcrumb Navigation */}
-      <nav className="flex items-center gap-1.5 text-xs text-[#929BAE]">
-        <Link href="/dashboard" className="hover:text-[#F5F7FA] transition-colors">
+      <nav className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden whitespace-nowrap text-xs text-[#929BAE]">
+        <Link href="/dashboard" className="shrink-0 hover:text-[#F5F7FA] transition-colors">
           Flowmind
         </Link>
         {segments.map((seg, idx) => {
@@ -29,11 +27,11 @@ export function Header({ user }: { user?: { name: string; email: string } }) {
 
           return (
             <React.Fragment key={href}>
-              <ChevronRight className="h-3 w-3 text-[#929BAE]/50" />
+              <ChevronRight className="h-3 w-3 shrink-0 text-[#929BAE]/50" />
               {isLast ? (
-                <span className="font-medium text-[#F5F7FA]">{formatted}</span>
+                <span className="inline-block max-w-[140px] truncate font-medium text-[#F5F7FA]">{formatted}</span>
               ) : (
-                <Link href={href} className="hover:text-[#F5F7FA] transition-colors">
+                <Link href={href} className="inline-block max-w-[120px] truncate hover:text-[#F5F7FA] transition-colors">
                   {formatted}
                 </Link>
               )}
@@ -43,7 +41,7 @@ export function Header({ user }: { user?: { name: string; email: string } }) {
       </nav>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
         {/* Workspace Badge */}
         <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-[#252C3A] bg-[#141925] px-2.5 py-1 text-xs text-[#929BAE]">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />

@@ -79,12 +79,15 @@ export function Sidebar({ user }: { user?: { name: string; email: string } }) {
     <aside
       className={cn(
         "flex flex-col border-r border-[#252C3A] bg-[#0E111B] transition-all duration-300 select-none z-30 shrink-0",
-        isCollapsed ? "w-16" : "w-60"
+        isCollapsed ? "w-[4.5rem]" : "w-60"
       )}
     >
       {/* Brand Header */}
-      <div className="flex h-14 items-center justify-between px-3.5 border-b border-[#252C3A]">
-        <Link href="/dashboard" className="flex items-center gap-2.5 overflow-hidden">
+      <div className={cn(
+        "flex h-14 items-center border-b border-[#252C3A]",
+        isCollapsed ? "justify-between px-1.5" : "justify-between px-3.5"
+      )}>
+        <Link href="/dashboard" title={isCollapsed ? "Flowmind" : undefined} aria-label="Flowmind dashboard" className="flex shrink-0 items-center gap-2.5 overflow-hidden">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-md shadow-indigo-600/30">
             <Zap className="h-4 w-4 fill-current" />
           </div>
@@ -96,7 +99,8 @@ export function Sidebar({ user }: { user?: { name: string; email: string } }) {
         </Link>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="rounded-lg p-1 text-[#929BAE] hover:bg-[#1E2538] hover:text-[#F5F7FA] transition-colors"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[#929BAE] hover:bg-[#1E2538] hover:text-[#F5F7FA] transition-colors"
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
           {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -144,7 +148,7 @@ export function Sidebar({ user }: { user?: { name: string; email: string } }) {
         <div
           className={cn(
             "flex items-center gap-2.5 rounded-lg p-2 bg-[#141925]/60 border border-[#252C3A]/40",
-            isCollapsed && "justify-center"
+            isCollapsed && "flex-col justify-center gap-1.5 p-1.5"
           )}
         >
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-violet-500 to-indigo-500 text-xs font-bold text-white">
@@ -159,9 +163,10 @@ export function Sidebar({ user }: { user?: { name: string; email: string } }) {
           <button
             onClick={handleLogout}
             title="Sign out"
-            className="rounded p-1 text-[#929BAE] hover:bg-rose-500/20 hover:text-rose-400 transition-colors"
+            aria-label="Sign out"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-[#929BAE] hover:bg-rose-500/20 hover:text-rose-400 transition-colors"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
       </div>
