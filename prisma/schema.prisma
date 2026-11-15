@@ -1,0 +1,302 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum ExecutionStatus {
+  QUEUED
+  RUNNING
+  WAITING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum NodeExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+enum TriggerType {
+  MANUAL
+  WEBHOOK
+  SCHEDULE
+}
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+  DEBUG
+}
+
+enum IntegrationType {
+  OLLAMA
+  OPENAI_COMPATIBLE
+  SMTP
+  WEBHOOK
+  HTTP_API
+}
+
+model User {
+  id           String            @id @default(uuid())
+  email        String            @unique
+  passwordHash String
+  name         String
+  avatarUrl    String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  memberships  WorkspaceMember[]
+  executions   WorkflowExecution[]
+
+  @@map("users")
+}
+
+model Workspace {
+  id           String            @id @default(uuid())
+  name         String
+  slug         String            @unique
+  ownerId      String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  members      WorkspaceMember[]
+  workflows    Workflow[]
+  integrations Integration[]
+  credentials  Credential[]
+  executions   WorkflowExecution[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String    @id @default(uuid())
+  workspaceId String
+  userId      String
+  role        Role      @default(MEMBER)
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+model Workflow {
+  id               String            @id @default(uuid())
+  workspaceId      String
+  name             String
+  description      String?
+  status           WorkflowStatus    @default(DRAFT)
+  triggerType      TriggerType       @default(MANUAL)
+  isPublished      Boolean           @default(false)
+  currentVersionId String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  versions         WorkflowVersion[]
+  executions       WorkflowExecution[]
+  schedules        ScheduledTrigger[]
+  webhooks         WebhookEndpoint[]
+
+  @@index([workspaceId])
+  @@index([status])
+  @@map("workflows")
+}
+
+model WorkflowVersion {
+  id            String              @id @default(uuid())
+  workflowId    String
+  versionNumber Int
+  description   String?
+  definition    Json                // Stores { nodes: [...], edges: [...], viewport: {...} }
+  isPublished   Boolean             @default(false)
+  createdAt     DateTime            @default(now())
+  workflow      Workflow            @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  executions    WorkflowExecution[]
+
+  @@unique([workflowId, versionNumber])
+  @@index([workflowId])
+  @@map("workflow_versions")
+}
+
+model WorkflowExecution {
+  id                String            @id @default(uuid())
+  workflowId        String
+  workflowVersionId String?
+  workspaceId       String
+  triggeredById     String?
+  status            ExecutionStatus   @default(QUEUED)
+  triggerSource     TriggerType       @default(MANUAL)
+  triggerPayload    Json?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  durationMs        Int?
+  errorMessage      String?
+  errorDetails      Json?
+  retryCount        Int               @default(0)
+  maxRetries        Int               @default(3)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  workflow          Workflow          @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  workflowVersion   WorkflowVersion?  @relation(fields: [workflowVersionId], references: [id], onDelete: SetNull)
+  workspace         Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  triggeredBy       User?             @relation(fields: [triggeredById], references: [id], onDelete: SetNull)
+  nodeExecutions    NodeExecution[]
+  logs              ExecutionLog[]
+
+  @@index([workspaceId])
+  @@index([workflowId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("workflow_executions")
+}
+
+model NodeExecution {
+  id           String              @id @default(uuid())
+  executionId  String
+  nodeId       String              // React Flow node ID
+  nodeType     String              // e.g. "ai-classify", "logic-condition"
+  nodeName     String
+  status       NodeExecutionStatus @default(PENDING)
+  inputData    Json?
+  outputData   Json?
+  errorMessage String?
+  durationMs   Int?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  retryCount   Int                 @default(0)
+  createdAt    DateTime            @default(now())
+
+  execution    WorkflowExecution   @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  logs         ExecutionLog[]
+
+  @@index([executionId])
+  @@index([nodeId])
+  @@index([status])
+  @@map("node_executions")
+}
+
+model ExecutionLog {
+  id              String         @id @default(uuid())
+  executionId     String
+  nodeExecutionId String?
+  level           LogLevel       @default(INFO)
+  message         String
+  metadata        Json?
+  timestamp       DateTime       @default(now())
+
+  execution       WorkflowExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  nodeExecution   NodeExecution?    @relation(fields: [nodeExecutionId], references: [id], onDelete: Cascade)
+
+  @@index([executionId])
+  @@index([nodeExecutionId])
+  @@index([timestamp])
+  @@map("execution_logs")
+}
+
+model Integration {
+  id          String          @id @default(uuid())
+  workspaceId String
+  type        IntegrationType
+  name        String
+  config      Json            // Host, model, credentials/masked keys, settings
+  isConnected Boolean         @default(false)
+  lastTestedAt DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, type, name])
+  @@index([workspaceId])
+  @@map("integrations")
+}
+
+model Credential {
+  id             String    @id @default(uuid())
+  workspaceId    String
+  name           String
+  type           String    // e.g. "api_key", "bearer_token", "smtp_password"
+  encryptedValue String
+  iv             String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("credentials")
+}
+
+model WorkflowTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  category    String   // "Customer Support", "Operations", "Sales & Marketing", "HR", "DevOps"
+  icon        String   // Lucide icon name
+  definition  Json     // { nodes: [...], edges: [...] }
+  difficulty  String   @default("Beginner")
+  isOfficial  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("workflow_templates")
+}
+
+model ScheduledTrigger {
+  id             String    @id @default(uuid())
+  workflowId     String
+  cronExpression String    // e.g. "0 * * * *"
+  timezone       String    @default("UTC")
+  isActive       Boolean   @default(true)
+  nextRunAt      DateTime?
+  lastRunAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  workflow       Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([isActive])
+  @@map("scheduled_triggers")
+}
+
+model WebhookEndpoint {
+  id         String    @id @default(uuid())
+  workflowId String
+  token      String    @unique @default(uuid())
+  secret     String?
+  method     String    @default("POST")
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  workflow   Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([token])
+  @@map("webhook_endpoints")
+}
+
